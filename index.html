@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>会員登録フォーム</title>
+  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+</head>
+<body>
+  <h1>会員登録フォーム</h1>
+  <p>LINEで開くページのテストです。</p>
+
+  <script>
+    const LIFF_ID = "2008405271-qoGVB0DW";
+
+    async function main() {
+      try {
+        await liff.init({ liffId: LIFF_ID });
+
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        document.body.insertAdjacentHTML(
+          "beforeend",
+          `<p>LINE表示名: ${profile.displayName}</p>`
+        );
+      } catch (e) {
+        document.body.insertAdjacentHTML(
+          "beforeend",
+          `<p>LIFFの起動に失敗しました。</p>`
+        );
+        console.error(e);
+      }
+    }
+
+    main();
+  </script>
+</body>
+</html>
