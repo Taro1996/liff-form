@@ -107,6 +107,7 @@
       font-size: 14px;
       line-height: 1.6;
       display: none;
+      white-space: pre-line;
     }
 
     .message.success {
@@ -150,8 +151,7 @@
     <div id="errorMessage" class="message error"></div>
 
     <div class="note">
-      今はフォーム表示テスト段階です。<br />
-      次のステップでShopifyへの自動登録処理をつなぎます。
+      LINE登録フォームからShopify会員情報を作成します。
     </div>
   </div>
 
@@ -211,24 +211,32 @@
       }
 
       button.disabled = true;
-      button.textContent = "確認中...";
+      button.textContent = "登録中...";
 
       try {
-        showSuccess(
-          "フォームの表示確認は成功です。次にShopify連携APIをつなげます。\n" +
-          "取得できた情報：\n" +
-          "LINE表示名: " + lineDisplayName + "\n" +
-          "メールアドレス: " + email
-        );
-
-        console.log({
-          lineUserId: lineUserId,
-          name: lineDisplayName,
-          email: email
+        const response = await fetch("/api/register", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            lineUserId: lineUserId,
+            name: lineDisplayName,
+            email: email
+          })
         });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw new Error(result.message || "会員登録に失敗しました。");
+        }
+
+        showSuccess("会員登録が完了しました。");
+        document.getElementById("registerForm").style.display = "none";
       } catch (error) {
-        showError("送信確認に失敗しました。");
         console.error(error);
+        showError(error.message || "登録時にエラーが発生しました。");
       } finally {
         button.disabled = false;
         button.textContent = "登録する";
