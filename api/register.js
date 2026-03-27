@@ -24,12 +24,12 @@ export default async function handler(req, res) {
       {
         method: "POST",
         headers: {
-          "Content-Type": "application/json"
+          "Content-Type": "application/x-www-form-urlencoded"
         },
-        body: JSON.stringify({
+        body: new URLSearchParams({
+          grant_type: "client_credentials",
           client_id: clientId,
-          client_secret: clientSecret,
-          grant_type: "client_credentials"
+          client_secret: clientSecret
         })
       }
     );
