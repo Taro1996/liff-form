@@ -1,248 +1,93 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>LINE連携で超お得が満載</title>
-  <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
-  <style>
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
-      background: #f7f7f7;
-      margin: 0;
-      padding: 24px 16px;
-      color: #222;
-    }
+<script>
+  const LIFF_ID = "2008405271-qoGVB0DW";
 
-    .card {
-      max-width: 480px;
-      margin: 0 auto;
-      background: #fff;
-      border-radius: 16px;
-      padding: 24px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-    }
+  let lineUserId = "";
+  let lineDisplayName = "";
 
-    h1 {
-      font-size: 28px;
-      margin: 0 0 12px;
-      line-height: 1.4;
-    }
+  async function initializeLiff() {
+    try {
+      await liff.init({ liffId: LIFF_ID });
 
-    .lead {
-      font-size: 15px;
-      color: #666;
-      margin-bottom: 24px;
-      line-height: 1.7;
-    }
-
-    .line-name-box {
-      background: #f2f8f2;
-      border: 1px solid #d8ead8;
-      padding: 12px 14px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      font-size: 14px;
-      color: #2d5f2f;
-    }
-
-    label {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      margin-bottom: 8px;
-      margin-top: 16px;
-    }
-
-    input {
-      width: 100%;
-      padding: 14px;
-      font-size: 16px;
-      border: 1px solid #d9d9d9;
-      border-radius: 10px;
-      box-sizing: border-box;
-      outline: none;
-      background: #fff;
-    }
-
-    input:focus {
-      border-color: #06c755;
-      box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.12);
-    }
-
-    .readonly {
-      background: #f3f3f3;
-      color: #666;
-    }
-
-    button {
-      width: 100%;
-      margin-top: 24px;
-      padding: 15px;
-      border: none;
-      border-radius: 12px;
-      background: #06c755;
-      color: #fff;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .note {
-      font-size: 13px;
-      color: #888;
-      line-height: 1.6;
-      margin-top: 16px;
-    }
-
-    .message {
-      margin-top: 18px;
-      padding: 12px 14px;
-      border-radius: 10px;
-      font-size: 14px;
-      line-height: 1.6;
-      display: none;
-      white-space: pre-line;
-    }
-
-    .message.success {
-      display: block;
-      background: #edf9f1;
-      color: #18794e;
-      border: 1px solid #cdebd7;
-    }
-
-    .message.error {
-      display: block;
-      background: #fff2f2;
-      color: #b42318;
-      border: 1px solid #f4c7c7;
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>LINE連携で超お得が満載</h1>
-    <div class="lead">
-      LINEで簡単登録
-    </div>
-
-    <div id="lineNameBox" class="line-name-box">
-      LINE情報を取得中です...
-    </div>
-
-    <form id="registerForm">
-      <label for="name">お名前</label>
-      <input id="name" type="text" class="readonly" readonly />
-
-      <label for="email">メールアドレス</label>
-      <input id="email" type="email" placeholder="example@email.com" />
-
-      <button id="submitBtn" type="submit">こちらをタップ</button>
-    </form>
-
-    <div id="successMessage" class="message success"></div>
-    <div id="errorMessage" class="message error"></div>
-
-    <div class="note">
-      LINEで取得した情報をもとに、会員登録を行います。
-    </div>
-  </div>
-
-  <script>
-    const LIFF_ID = "2008405271-qoGVB0DW";
-
-    let lineUserId = "";
-    let lineDisplayName = "";
-
-    async function initializeLiff() {
-      try {
-        await liff.init({ liffId: LIFF_ID });
-
-        if (!liff.isLoggedIn()) {
-          liff.login();
-          return;
-        }
-
-        const profile = await liff.getProfile();
-        lineUserId = profile.userId;
-        lineDisplayName = profile.displayName || "";
-
-        document.getElementById("name").value = lineDisplayName;
-        document.getElementById("lineNameBox").textContent =
-          "LINE表示名：" + lineDisplayName;
-      } catch (error) {
-        showError("LIFFの初期化に失敗しました。設定を確認してください。");
-        console.error(error);
-      }
-    }
-
-    function showError(message) {
-      const errorBox = document.getElementById("errorMessage");
-      const successBox = document.getElementById("successMessage");
-      successBox.style.display = "none";
-      errorBox.textContent = message;
-      errorBox.style.display = "block";
-    }
-
-    function showSuccess(message) {
-      const successBox = document.getElementById("successMessage");
-      const errorBox = document.getElementById("errorMessage");
-      errorBox.style.display = "none";
-      successBox.textContent = message;
-      successBox.style.display = "block";
-    }
-
-    document.getElementById("registerForm").addEventListener("submit", async function (e) {
-      e.preventDefault();
-
-      const email = document.getElementById("email").value.trim();
-      const button = document.getElementById("submitBtn");
-
-      if (!email) {
-        showError("メールアドレスを入力してください。");
+      if (!liff.isLoggedIn()) {
+        liff.login();
         return;
       }
 
-      button.disabled = true;
-      button.textContent = "登録中...";
+      const profile = await liff.getProfile();
+      lineUserId = profile.userId;
+      lineDisplayName = profile.displayName || "";
 
-      try {
-        const response = await fetch("/api/register", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            lineUserId: lineUserId,
-            name: lineDisplayName,
-            email: email
-          })
-        });
+      document.getElementById("name").value = lineDisplayName;
+      document.getElementById("lineNameBox").textContent =
+        "LINE表示名：" + lineDisplayName;
+    } catch (error) {
+      showError("LIFFの初期化に失敗しました。");
+    }
+  }
 
-        const result = await response.json();
+  function showError(message) {
+    const errorBox = document.getElementById("errorMessage");
+    const successBox = document.getElementById("successMessage");
+    successBox.style.display = "none";
+    errorBox.textContent = message;
+    errorBox.style.display = "block";
+  }
 
-        if (!response.ok) {
-          throw new Error(result.message || "登録に失敗しました。");
-        }
+  function showSuccess(message) {
+    const successBox = document.getElementById("successMessage");
+    const errorBox = document.getElementById("errorMessage");
+    errorBox.style.display = "none";
+    successBox.textContent = message;
+    successBox.style.display = "block";
+  }
 
-        showSuccess("登録が完了しました。\nLINEより、お得な情報を受け取ってください。");
-        document.getElementById("registerForm").style.display = "none";
-      } catch (error) {
-        console.error(error);
-        showError(error.message || "登録時にエラーが発生しました。");
-      } finally {
-        button.disabled = false;
-        button.textContent = "こちらをタップ";
+  document.getElementById("registerForm").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const email = document.getElementById("email").value.trim();
+    const button = document.getElementById("submitBtn");
+
+    if (!email) {
+      showError("メールアドレスを入力してください。");
+      return;
+    }
+
+    button.disabled = true;
+    button.textContent = "登録中...";
+
+    try {
+      const response = await fetch("/api/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          lineUserId: lineUserId,
+          name: lineDisplayName,
+          email: email
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "登録に失敗しました。");
       }
-    });
 
-    initializeLiff();
-  </script>
-</body>
-</html>
+      // ✅ ここが重要（遷移追加）
+      showSuccess("登録完了！LINE連携を行います…");
+
+      setTimeout(() => {
+        window.location.href = "https://crmplusの認証URLをここに入れる";
+      }, 1500);
+
+    } catch (error) {
+      showError(error.message || "登録時にエラーが発生しました。");
+    } finally {
+      button.disabled = false;
+      button.textContent = "こちらをタップ";
+    }
+  });
+
+  initializeLiff();
+</script>
