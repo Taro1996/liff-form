@@ -128,17 +128,19 @@
 <body>
   <div class="card">
     <h1>LINE連携で超お得が満載</h1>
-    <div class="lead">LINEで簡単登録</div>
+    <div class="lead">
+      LINEで簡単登録
+    </div>
 
     <div id="lineNameBox" class="line-name-box">
       LINE情報を取得中です...
     </div>
 
     <form id="registerForm">
-      <label>お名前</label>
+      <label for="name">お名前</label>
       <input id="name" type="text" class="readonly" readonly />
 
-      <label>メールアドレス</label>
+      <label for="email">メールアドレス</label>
       <input id="email" type="email" placeholder="example@email.com" />
 
       <button id="submitBtn" type="submit">こちらをタップ</button>
@@ -154,46 +156,72 @@
 
   <script>
     const LIFF_ID = "2008405271-qoGVB0DW";
-    const ACCOUNT_URL = "https://eda-livestock-ec.com/account?view=profile";
+    const ACCOUNT_URL = "https://shopify.com/94055792938/account/profile";
 
     let lineUserId = "";
     let lineDisplayName = "";
 
     async function initializeLiff() {
-      await liff.init({ liffId: LIFF_ID });
+      try {
+        await liff.init({ liffId: LIFF_ID });
 
-      if (!liff.isLoggedIn()) {
-        liff.login();
-        return;
+        if (!liff.isLoggedIn()) {
+          liff.login();
+          return;
+        }
+
+        const profile = await liff.getProfile();
+        lineUserId = profile.userId;
+        lineDisplayName = profile.displayName || "";
+
+        document.getElementById("name").value = lineDisplayName;
+        document.getElementById("lineNameBox").textContent =
+          "LINE表示名：" + lineDisplayName;
+      } catch (error) {
+        showError("LIFFの初期化に失敗しました。設定を確認してください。");
+        console.error(error);
       }
-
-      const profile = await liff.getProfile();
-      lineUserId = profile.userId;
-      lineDisplayName = profile.displayName || "";
-
-      document.getElementById("name").value = lineDisplayName;
-      document.getElementById("lineNameBox").textContent =
-        "LINE表示名：" + lineDisplayName;
     }
 
     function showError(message) {
-      document.getElementById("errorMessage").textContent = message;
-      document.getElementById("errorMessage").style.display = "block";
+      const errorBox = document.getElementById("errorMessage");
+      const successBox = document.getElementById("successMessage");
+      successBox.style.display = "none";
+      errorBox.textContent = message;
+      errorBox.style.display = "block";
     }
 
     function showSuccess(message) {
-      document.getElementById("successMessage").textContent = message;
-      document.getElementById("successMessage").style.display = "block";
+      const successBox = document.getElementById("successMessage");
+      const errorBox = document.getElementById("errorMessage");
+      errorBox.style.display = "none";
+      successBox.textContent = message;
+      successBox.style.display = "block";
     }
 
     async function openAccountPage() {
-      await liff.openWindow({
-        url: ACCOUNT_URL,
-        external: true
-      });
+      try {
+        if (typeof liff !== "undefined") {
+          await liff.openWindow({
+            url: ACCOUNT_URL,
+            external: true
+          });
 
-      if (liff.isInClient()) {
-        setTimeout(() => liff.closeWindow(), 300);
+          if (liff.isInClient()) {
+            setTimeout(() => {
+              try {
+                liff.closeWindow();
+              } catch (closeError) {
+                console.error("LIFF close error:", closeError);
+              }
+            }, 300);
+          }
+        } else {
+          window.location.href = ACCOUNT_URL;
+        }
+      } catch (error) {
+        console.error("openAccountPage error:", error);
+        window.location.href = ACCOUNT_URL;
       }
     }
 
@@ -204,7 +232,12 @@
       const button = document.getElementById("submitBtn");
 
       if (!email) {
-        showError("メールアドレスを入力してください");
+        showError("メールアドレスを入力してください。");
+        return;
+      }
+
+      if (!lineUserId) {
+        showError("LINEユーザー情報が取得できていません。もう一度開き直してください。");
         return;
       }
 
@@ -212,28 +245,38 @@
       button.textContent = "登録中...";
 
       try {
-        const res = await fetch("/api/register", {
+        const response = await fetch("/api/register", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json"
+          },
           body: JSON.stringify({
-            lineUserId,
+            lineUserId: lineUserId,
             name: lineDisplayName,
-            email
+            email: email
           })
         });
 
-        if (!res.ok) throw new Error("登録失敗");
+        const result = await response.json();
 
-        showSuccess("登録完了 → プロフィールへ移動");
+        if (!response.ok) {
+          throw new Error(result.message || "登録に失敗しました。");
+        }
 
-        setTimeout(() => openAccountPage(), 1200);
+        showSuccess("登録が完了しました。\nプロフィールページを開きます。");
+        document.getElementById("registerForm").style.display = "none";
 
-      } catch (err) {
-        showError("エラー発生");
+        setTimeout(() => {
+          openAccountPage();
+        }, 1200);
+
+      } catch (error) {
+        console.error(error);
+        showError(error.message || "登録時にエラーが発生しました。");
+      } finally {
+        button.disabled = false;
+        button.textContent = "こちらをタップ";
       }
-
-      button.disabled = false;
-      button.textContent = "こちらをタップ";
     });
 
     initializeLiff();
