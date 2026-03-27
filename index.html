@@ -5,15 +5,163 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>会員登録フォーム</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 24px 16px;
+      color: #222;
+    }
+
+    .card {
+      max-width: 480px;
+      margin: 0 auto;
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      font-size: 28px;
+      margin: 0 0 12px;
+      line-height: 1.4;
+    }
+
+    .lead {
+      font-size: 15px;
+      color: #666;
+      margin-bottom: 24px;
+      line-height: 1.7;
+    }
+
+    .line-name-box {
+      background: #f2f8f2;
+      border: 1px solid #d8ead8;
+      padding: 12px 14px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      font-size: 14px;
+      color: #2d5f2f;
+    }
+
+    label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      margin-top: 16px;
+    }
+
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 16px;
+      border: 1px solid #d9d9d9;
+      border-radius: 10px;
+      box-sizing: border-box;
+      outline: none;
+      background: #fff;
+    }
+
+    input:focus {
+      border-color: #06c755;
+      box-shadow: 0 0 0 3px rgba(6, 199, 85, 0.12);
+    }
+
+    .readonly {
+      background: #f3f3f3;
+      color: #666;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 24px;
+      padding: 15px;
+      border: none;
+      border-radius: 12px;
+      background: #06c755;
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .note {
+      font-size: 13px;
+      color: #888;
+      line-height: 1.6;
+      margin-top: 16px;
+    }
+
+    .message {
+      margin-top: 18px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.6;
+      display: none;
+    }
+
+    .message.success {
+      display: block;
+      background: #edf9f1;
+      color: #18794e;
+      border: 1px solid #cdebd7;
+    }
+
+    .message.error {
+      display: block;
+      background: #fff2f2;
+      color: #b42318;
+      border: 1px solid #f4c7c7;
+    }
+  </style>
 </head>
 <body>
-  <h1>会員登録フォーム</h1>
-  <p>LINEで開くページのテストです。</p>
+  <div class="card">
+    <h1>会員登録フォーム</h1>
+    <div class="lead">
+      LINEから簡単に会員登録できます。<br />
+      お名前はLINE情報から取得し、メールアドレスだけ入力してください。
+    </div>
+
+    <div id="lineNameBox" class="line-name-box">
+      LINE情報を取得中です...
+    </div>
+
+    <form id="registerForm">
+      <label for="name">お名前</label>
+      <input id="name" type="text" class="readonly" readonly />
+
+      <label for="email">メールアドレス</label>
+      <input id="email" type="email" placeholder="example@email.com" />
+
+      <button id="submitBtn" type="submit">登録する</button>
+    </form>
+
+    <div id="successMessage" class="message success"></div>
+    <div id="errorMessage" class="message error"></div>
+
+    <div class="note">
+      今はフォーム表示テスト段階です。<br />
+      次のステップでShopifyへの自動登録処理をつなぎます。
+    </div>
+  </div>
 
   <script>
     const LIFF_ID = "2008405271-qoGVB0DW";
 
-    async function main() {
+    let lineUserId = "";
+    let lineDisplayName = "";
+
+    async function initializeLiff() {
       try {
         await liff.init({ liffId: LIFF_ID });
 
@@ -23,20 +171,71 @@
         }
 
         const profile = await liff.getProfile();
-        document.body.insertAdjacentHTML(
-          "beforeend",
-          `<p>LINE表示名: ${profile.displayName}</p>`
-        );
-      } catch (e) {
-        document.body.insertAdjacentHTML(
-          "beforeend",
-          `<p>LIFFの起動に失敗しました。</p>`
-        );
-        console.error(e);
+        lineUserId = profile.userId;
+        lineDisplayName = profile.displayName || "";
+
+        document.getElementById("name").value = lineDisplayName;
+        document.getElementById("lineNameBox").textContent =
+          "LINE表示名：" + lineDisplayName;
+      } catch (error) {
+        showError("LIFFの初期化に失敗しました。設定を確認してください。");
+        console.error(error);
       }
     }
 
-    main();
+    function showError(message) {
+      const errorBox = document.getElementById("errorMessage");
+      const successBox = document.getElementById("successMessage");
+      successBox.style.display = "none";
+      errorBox.textContent = message;
+      errorBox.style.display = "block";
+    }
+
+    function showSuccess(message) {
+      const successBox = document.getElementById("successMessage");
+      const errorBox = document.getElementById("errorMessage");
+      errorBox.style.display = "none";
+      successBox.textContent = message;
+      successBox.style.display = "block";
+    }
+
+    document.getElementById("registerForm").addEventListener("submit", async function (e) {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value.trim();
+      const button = document.getElementById("submitBtn");
+
+      if (!email) {
+        showError("メールアドレスを入力してください。");
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "確認中...";
+
+      try {
+        showSuccess(
+          "フォームの表示確認は成功です。次にShopify連携APIをつなげます。\n" +
+          "取得できた情報：\n" +
+          "LINE表示名: " + lineDisplayName + "\n" +
+          "メールアドレス: " + email
+        );
+
+        console.log({
+          lineUserId: lineUserId,
+          name: lineDisplayName,
+          email: email
+        });
+      } catch (error) {
+        showError("送信確認に失敗しました。");
+        console.error(error);
+      } finally {
+        button.disabled = false;
+        button.textContent = "登録する";
+      }
+    });
+
+    initializeLiff();
   </script>
 </body>
 </html>
