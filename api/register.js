@@ -34,11 +34,24 @@ export default async function handler(req, res) {
       }
     );
 
-    const tokenData = await tokenResponse.json();
+    const tokenText = await tokenResponse.text();
+    let tokenData;
+
+    try {
+      tokenData = JSON.parse(tokenText);
+    } catch (e) {
+      console.error("Token raw response:", tokenText);
+      return res.status(500).json({
+        message: "Shopifyトークン取得時にHTMLまたは不正な文字列が返りました。"
+      });
+    }
 
     if (!tokenResponse.ok || !tokenData.access_token) {
       console.error("Token error:", tokenData);
-      return res.status(500).json({ message: "Shopifyアクセストークン取得に失敗しました。" });
+      return res.status(500).json({
+        message: "Shopifyアクセストークン取得に失敗しました。",
+        error: tokenData
+      });
     }
 
     const accessToken = tokenData.access_token;
@@ -64,7 +77,17 @@ export default async function handler(req, res) {
       }
     );
 
-    const customerData = await customerResponse.json();
+    const customerText = await customerResponse.text();
+    let customerData;
+
+    try {
+      customerData = JSON.parse(customerText);
+    } catch (e) {
+      console.error("Customer raw response:", customerText);
+      return res.status(500).json({
+        message: "Shopify顧客作成時にHTMLまたは不正な文字列が返りました。"
+      });
+    }
 
     if (!customerResponse.ok) {
       console.error("Customer create error:", customerData);
