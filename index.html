@@ -21,7 +21,8 @@
       document.getElementById("lineNameBox").textContent =
         "LINE表示名：" + lineDisplayName;
     } catch (error) {
-      showError("LIFFの初期化に失敗しました。");
+      showError("LIFFの初期化に失敗しました。設定を確認してください。");
+      console.error(error);
     }
   }
 
@@ -74,14 +75,16 @@
         throw new Error(result.message || "登録に失敗しました。");
       }
 
-      // ✅ ここが重要（遷移追加）
-      showSuccess("登録完了！LINE連携を行います…");
+      showSuccess("登録が完了しました。\nLINE連携ページへ移動します。");
+
+      document.getElementById("registerForm").style.display = "none";
 
       setTimeout(() => {
-        window.location.href = "https://crmplusの認証URLをここに入れる";
+        window.location.href = "https://eda-livestock-ec.com/account";
       }, 1500);
 
     } catch (error) {
+      console.error(error);
       showError(error.message || "登録時にエラーが発生しました。");
     } finally {
       button.disabled = false;
