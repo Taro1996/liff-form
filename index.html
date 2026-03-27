@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>会員登録フォーム</title>
+  <title>LINE連携で超お得が満載</title>
   <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
   <style>
     body {
@@ -127,10 +127,9 @@
 </head>
 <body>
   <div class="card">
-    <h1>会員登録フォーム</h1>
+    <h1>LINE連携で超お得が満載</h1>
     <div class="lead">
-      LINEから簡単に会員登録できます。<br />
-      お名前はLINE情報から取得し、メールアドレスだけ入力してください。
+      LINEで簡単登録
     </div>
 
     <div id="lineNameBox" class="line-name-box">
@@ -144,14 +143,14 @@
       <label for="email">メールアドレス</label>
       <input id="email" type="email" placeholder="example@email.com" />
 
-      <button id="submitBtn" type="submit">登録する</button>
+      <button id="submitBtn" type="submit">こちらをタップ</button>
     </form>
 
     <div id="successMessage" class="message success"></div>
     <div id="errorMessage" class="message error"></div>
 
     <div class="note">
-      LINE登録フォームからShopify会員情報を作成します。
+      LINEで取得した情報をもとに、会員登録を行います。
     </div>
   </div>
 
@@ -229,17 +228,17 @@
         const result = await response.json();
 
         if (!response.ok) {
-          throw new Error(result.message || "会員登録に失敗しました。");
+          throw new Error(result.message || "登録に失敗しました。");
         }
 
-        showSuccess("会員登録が完了しました。");
+        showSuccess("登録が完了しました。\nLINEより、お得な情報を受け取ってください。");
         document.getElementById("registerForm").style.display = "none";
       } catch (error) {
         console.error(error);
         showError(error.message || "登録時にエラーが発生しました。");
       } finally {
         button.disabled = false;
-        button.textContent = "登録する";
+        button.textContent = "こちらをタップ";
       }
     });
 
